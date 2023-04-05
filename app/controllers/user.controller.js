@@ -1,6 +1,7 @@
 const config = require("../config/index");
 const USER = require("../models/user.model");
 const CHATROOM = require("../models/chatRoom.model");
+const MESSAGE = require("../models/message.model");
 
 var jwt = require("jsonwebtoken");
 
@@ -27,15 +28,17 @@ exports.getInfoUser = async (req, res) => {
             let chatRooms = await CHATROOM.find({ owner: user });
             let roomInfo = [];
             chatRooms.forEach(async room => {
-                let friend;
+                let friend, lastMessage = null;
                 room.owner.forEach(async owner => {
                     if (owner._id.toString() !== user._id.toString()) {
                         friend = await USER.findById(owner);
+                        lastMessage = await MESSAGE.findById(room.message[room.message.length-1]);
                         roomInfo.push(
                             {
                                 _id: room._id,
                                 owner: room.owner,
                                 lastMessageDate: room.lastMessageDate,
+                                lastMessage: lastMessage,
                                 fullNameFriend: friend.fullName,
                                 avatar: friend.avatar,
                                 online: false
@@ -68,5 +71,40 @@ exports.getInfoUser = async (req, res) => {
         }
     } catch (error) {
         console.error(error);
+    }
+}
+
+exports.updateInfo = async (req, res) => {
+    try {
+        let user = await USER.findById(req.body._id);
+        console.log(req.body)
+        await user.updateOne({ fullName: req.body.fullName });
+        await user.updateOne({ avatar: req.body.avatar });
+        return res.send({ message: "Updated successfully" });
+    } catch (error) {
+        console.log(error)
+    }
+};
+
+var bcrypt = require("bcryptjs");
+
+exports.changePassword = async (req, res) => {
+    try {
+        let user = await USER.findById(req.body._id);
+        console.log(user)
+        var passwordIsValid = bcrypt.compareSync(
+            req.body.currentPassword,
+            user.password
+        );
+
+        if (!passwordIsValid) {
+            return res.status(401).send({ message: "Mật khẩu hiện tại chưa đúng !" });
+        }
+        else {
+            await user.updateOne({ password: bcrypt.hashSync(req.body.password, 8) });
+            return res.send({ message: "Updated successfully" });
+        }
+    } catch (error) {
+        console.log(error)
     }
 }
