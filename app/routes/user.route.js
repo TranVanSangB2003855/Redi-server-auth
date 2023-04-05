@@ -13,4 +13,14 @@ module.exports = function(app) {
     "/api/auth/getinfo",
     controller.getInfoUser
   );
+
+  app.put(
+    "/api/auth/updateinfo",
+    controller.updateInfo
+  );
+
+  app.put(
+    "/api/auth/changepassword",
+    controller.changePassword
+  );
 };
