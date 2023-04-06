@@ -2,12 +2,13 @@ const config = require("../config/index");
 const USER = require("../models/user.model");
 const CHATROOM = require("../models/chatRoom.model");
 const MESSAGE = require("../models/message.model");
+const redi = require("../function/rediFunct")
 
 var jwt = require("jsonwebtoken");
 
 exports.getInfoUser = async (req, res) => {
     let token = req.body.token;
-    console.log("token: ",token);
+    console.log("token: ", token);
     if (!token) {
         // return res.status(403).send({ message: "No token provided!" });
         return res.send(null);
@@ -22,12 +23,13 @@ exports.getInfoUser = async (req, res) => {
 
     try {
         const user = await USER.findById(req.userId);
+        //chatRooms làm riêng với friends vì hủy kết bạn vẫn còn phòng
         let chatRooms = await CHATROOM.find({ owner: user });
         let friends = await USER.find({ _id: user.contacts }, { password: 0, requestContact: 0, contacts: 0, createAt: 0, lastAccess: 0, __v: 0 });
         let requestContact = await USER.find({ _id: user.requestContact }, { password: 0, requestContact: 0, contacts: 0, createAt: 0, lastAccess: 0, __v: 0 });
 
         const token = jwt.sign({ id: user._id }, config.secret, {
-            expiresIn: 86400, //    24 hours
+            expiresIn: 86400, // 24 hours
         });
         console.log(chatRooms)
         let roomInfo = [];
@@ -36,11 +38,11 @@ exports.getInfoUser = async (req, res) => {
             let friend, lastMessage = null;
             for(let j = 0; j<chatRooms[i].owner.length; j++){
                 if (chatRooms[i].owner[j].toString() == user._id.toString()) {
-                    //console.log("true", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime());
+                    console.log("true", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime());
                 } else {
                     friend = await USER.findById(chatRooms[i].owner[j]);
                     lastMessage = await MESSAGE.findById(chatRooms[i].message[chatRooms[i].message.length - 1]);
-                    //console.log("false", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime(), friend)
+                    console.log("false", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime(), friend)
                     roomInfo.push(
                         {
                             _id: chatRooms[i]._id,
@@ -73,6 +75,7 @@ exports.getInfoUser = async (req, res) => {
                 'token': token
             }
         });
+
     } catch (error) {
         console.error(error);
     }
