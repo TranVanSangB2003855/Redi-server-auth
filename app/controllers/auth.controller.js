@@ -54,11 +54,11 @@ exports.signin = async (req, res) => {
             let friend, lastMessage = null;
             for(let j = 0; j<chatRooms[i].owner.length; j++){
                 if (chatRooms[i].owner[j].toString() == user._id.toString()) {
-                    //console.log("true", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime());
+                    console.log("true", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime());
                 } else {
                     friend = await USER.findById(chatRooms[i].owner[j]);
                     lastMessage = await MESSAGE.findById(chatRooms[i].message[chatRooms[i].message.length - 1]);
-                    //console.log("false", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime(), friend)
+                    console.log("false", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime(), friend)
                     roomInfo.push(
                         {
                             _id: chatRooms[i]._id,
