@@ -40,47 +40,56 @@ exports.signin = async (req, res) => {
       const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);      
       if (passwordIsValid) {
         //chatRooms làm riêng với friends vì hủy kết bạn vẫn còn phòng
-        let chatRooms = await CHATROOM.find({ owner: user});
-        let roomInfo = [];
-        chatRooms.forEach(async room=>{
-          let friend, lastMessage = null;
-          room.owner.forEach(async owner=>{
-            if(owner._id.toString()!==user._id.toString()){
-              friend = await USER.findById(owner);
-              lastMessage = await MESSAGE.findById(room.message[room.message.length-1]);
-              roomInfo.push(
-                { _id: room._id, 
-                  owner: room.owner,
-                  lastMessageDate: room.lastMessageDate,
-                  lastMessage: lastMessage,
-                  fullNameFriend: friend.fullName,
-                  avatar: friend.avatar,
-                  online: false
-                }
-              );
-            };
-          });
-        });
-
-        let friends = await USER.find({_id: user.contacts}, { password: 0, requestContact: 0, contacts: 0,createAt: 0,lastAccess: 0,__v: 0});
-        let requestContact = await USER.find({_id: user.requestContact}, { password: 0, requestContact: 0, contacts: 0,createAt: 0,lastAccess: 0,__v: 0});
+        let chatRooms = await CHATROOM.find({ owner: user });
+        let friends = await USER.find({ _id: user.contacts }, { password: 0, requestContact: 0, contacts: 0, createAt: 0, lastAccess: 0, __v: 0 });
+        let requestContact = await USER.find({ _id: user.requestContact }, { password: 0, requestContact: 0, contacts: 0, createAt: 0, lastAccess: 0, __v: 0 });
 
         const token = jwt.sign({ id: user._id }, config.secret, {
-          expiresIn: 86400, // 24 hours
+            expiresIn: 86400, // 24 hours
         });
+        console.log(chatRooms)
+        let roomInfo = [];
 
+        for(let i = 0; i<chatRooms.length; i++){
+            let friend, lastMessage = null;
+            for(let j = 0; j<chatRooms[i].owner.length; j++){
+                if (chatRooms[i].owner[j].toString() == user._id.toString()) {
+                    //console.log("true", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime());
+                } else {
+                    friend = await USER.findById(chatRooms[i].owner[j]);
+                    lastMessage = await MESSAGE.findById(chatRooms[i].message[chatRooms[i].message.length - 1]);
+                    //console.log("false", chatRooms[i].owner[j].toString(), user._id.toString(), redi.getTime(), friend)
+                    roomInfo.push(
+                        {
+                            _id: chatRooms[i]._id,
+                            owner: chatRooms[i].owner,
+                            lastMessageDate: chatRooms[i].lastMessageDate,
+                            lastMessage: lastMessage,
+                            fullNameFriend: friend.fullName,
+                            avatar: friend.avatar,
+                            online: false
+                        }
+                    );
+                };
+            }
+        }
+
+        // console.log("requestContact: ", requestContact);
+        // console.log("roomInfo: ", roomInfo);
+        // console.log("friends: ", friends);
+        
         //Send đăng nhập ở chỗ này
         res.status(200).send({
-          message: {
-            '_id':user._id,
-            'phone':user.phone,
-            'fullName':user.fullName,
-            'avatar':user.avatar,
-            'requestContact': requestContact,
-            'contacts': friends,
-            'chatRooms': roomInfo,
-            'token': token
-          }
+            message: {
+                '_id': user._id,
+                'phone': user.phone,
+                'fullName': user.fullName,
+                'avatar': user.avatar,
+                'requestContact': requestContact,
+                'contacts': friends,
+                'chatRooms': roomInfo,
+                'token': token
+            }
         });
       } else {
         res.status(400).send({ message: "Mật khẩu nhập không đúng !" });
