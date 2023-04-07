@@ -24,6 +24,7 @@ exports.signup = async (req, res) => {
         contacts: []
       });
       await user.save();
+      console.log(user.fullName+" đã tạo tài khoản thành công !");
       res.status(200).send({ message: "Đăng ký tài khoản mới thành công !!!" });
     }
   } catch (error) {
@@ -76,7 +77,7 @@ exports.signin = async (req, res) => {
 
         // console.log("requestContact: ", requestContact);
         // console.log("roomInfo: ", roomInfo);
-        // console.log("friends: ", friends);
+        console.log("Người dùng: "+ user.fullName +" đã đăng nhập thành công !");
         
         //Send đăng nhập ở chỗ này
         res.status(200).send({
@@ -110,7 +111,7 @@ exports.signout = async (req, res) => {
         { $set: { lastAccess: redi.getTime() } },
         { new: true }
       );
-      console.log(req.body.phone)
+      console.log("Người dùng: "+ user.fullName +" đã đăng xuất !");
       res.status(200).send({ message: "Đăng xuất thành công !"});
     } catch (error) {
       console.error(error);
